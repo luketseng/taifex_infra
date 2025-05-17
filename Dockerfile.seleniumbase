@@ -1,0 +1,50 @@
+FROM seleniumbase/seleniumbase:latest
+
+# Switch to root user to install packages
+USER root
+
+# Copy requirements file and install Python packages
+COPY requirements.txt /tmp/requirements.txt
+
+RUN pip uninstall -y importlib || true && \
+    pip install --upgrade pip && \
+    pip install -r /tmp/requirements.txt && \
+    python3 -c "import pkg_resources; \
+        pkgs = [line.strip() for line in open('/tmp/requirements.txt')]; \
+        missing = [pkg for pkg in pkgs if not pkg_resources.working_set.by_key.get(pkg.lower())]; \
+        exit(1) if missing else print('✅ All Python packages installed.')"
+
+# Install tzdata and cron, set timezone
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata cron && \
+    ln -snf /usr/share/zoneinfo/Asia/Taipei /etc/localtime && \
+    echo "Asia/Taipei" > /etc/timezone && \
+    dpkg-reconfigure -f noninteractive tzdata
+
+# Install ChromeDriver v101 (remove)
+#RUN wget -q https://chromedriver.storage.googleapis.com/101.0.4951.41/chromedriver_linux64.zip && \
+#    unzip chromedriver_linux64.zip && \
+#    mv -f chromedriver /usr/local/bin/chromedriver && \
+#    chmod +x /usr/local/bin/chromedriver && \
+#    rm chromedriver_linux64.zip
+
+# Copy the scripts to the container
+COPY start.sh /start.sh
+COPY init_chromedriver.sh /usr/local/bin/init_chromedriver.sh
+
+# Make the scripts executable
+RUN chmod +x /start.sh /usr/local/bin/init_chromedriver.sh
+
+# Run init_chromedriver.sh to update ChromeDriver during build time
+#RUN /usr/local/bin/init_chromedriver.sh
+
+# Set the entry point to start.sh
+ENTRYPOINT ["/start.sh"]
+
+# Default command to keep the container running
+CMD ["bash"]
+
+# chromedriver --version
+# > ChromeDriver 101.0.4951.41
+# /opt/google/chrome/chrome --version
+# > Google Chrome 101.0.4951.64

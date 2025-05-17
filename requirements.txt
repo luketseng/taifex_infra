@@ -1,0 +1,4 @@
+numpy
+pydrive
+selenium
+requests
