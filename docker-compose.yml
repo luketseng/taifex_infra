@@ -2,17 +2,18 @@
 services:
   taifex-web:
     image: httpd:latest
-    container_name: taifex-web
+    container_name: taifex-web-container
     ports:
       - "8080:80"  # Serve web files on http://host:8080
     volumes:
       - ../taifex_web:/usr/local/apache2/htdocs/
 
-  seleniumbase-app:
+  taifex-selenium:
     build:
       context: .
       dockerfile: Dockerfile.seleniumbase
-    container_name: seleniumbase-container
+    image: taifex-selenium-app  # Custom image name if build via "Dockerfile"
+    container_name: taifex-selenium-container
     volumes:
       - ../taifex_daily:/root/git/taifex_daily
       - ../taifex_web:/root/git/taifex_web
@@ -38,10 +39,3 @@ services:
 #    restart: unless-stopped
 #    shm_size: 2g
 
-#  taifex-daily:
-#    container_name: taifex-daily
-#    build:
-#      context: .
-#      dockerfile: Dockerfile  # Use the specified Dockerfile for building the image
-#    volumes:
-#      - ./taifex_daily:/home/root/git/taifex_daily  # Mount local taifex_daily directory into container
