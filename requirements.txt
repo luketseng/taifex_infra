@@ -1,4 +1,6 @@
 numpy
-pydrive
+pydrive2
 selenium
 requests
+pycryptodome
+
