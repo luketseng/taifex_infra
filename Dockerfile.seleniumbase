@@ -9,10 +9,17 @@ COPY requirements.txt /tmp/requirements.txt
 RUN pip uninstall -y importlib || true && \
     pip install --upgrade pip && \
     pip install -r /tmp/requirements.txt && \
-    python3 -c "import pkg_resources; \
-        pkgs = [line.strip() for line in open('/tmp/requirements.txt')]; \
-        missing = [pkg for pkg in pkgs if not pkg_resources.working_set.by_key.get(pkg.lower())]; \
-        exit(1) if missing else print('✅ All Python packages installed.')"
+    python3 - <<'EOF'
+import pkg_resources, sys
+with open('/tmp/requirements.txt') as f:
+    pkgs = [line.strip().split('==')[0] for line in f if line.strip()]
+missing = [pkg for pkg in pkgs if not pkg_resources.working_set.by_key.get(pkg.lower())]
+if missing:
+    print("❌ Missing packages:", missing)
+    sys.exit(1)
+else:
+    print("✅ All Python packages installed.")
+EOF
 
 # Install tzdata and cron, set timezone
 RUN apt-get update && \
@@ -48,3 +55,4 @@ CMD ["bash"]
 # > ChromeDriver 101.0.4951.41
 # /opt/google/chrome/chrome --version
 # > Google Chrome 101.0.4951.64
+
